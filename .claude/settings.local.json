@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite build)",
+      "Bash(npx tsc --noEmit)",
+      "Read(//c/Users/Xarda/онедrive/Рабочий стол/Проекты/Визиты/components/**)",
+      "Bash(powershell.exe -Command \"Get-ChildItem ''C:\\\\Users\\\\Xarda\\\\OneDrive\\\\Рабочий стол\\\\Проекты\\\\Визиты\\\\src''\")",
+      "Bash(powershell.exe -Command \"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path \\([System.IO.Path]::Combine\\($env:USERPROFILE, ''OneDrive'', ''Рабочий стол'', ''Проекты'', ''Визиты'', ''src''\\)\\)\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path \"\"%USERPROFILE%\\\\OneDrive\"\" 2>&1 | head -5\")",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Read(//c/Users/Xarda/OneDrive/Рабочий стол/Проекты/Визиты + Basel/Визиты + База/components/**)",
+      "Read(//c/Users/Xarda/OneDrive/Рабочий стол/Проекты/Визиты + База/Визиты +ába/services/**)",
+      "Bash(node -e \"require\\(''./append_base.js''\\)\")",
+      "Bash(node append_base.js)",
+      "Read(//c/Users/Xarda/OneDrive/Рабочий стол/Проекты/Визиты + База/Визиты + ZDA/services/**)",
+      "Read(//c/Users/Xarda/Onедrive/Рабочий стол/Проекты/Визиты + База/Визиты + База/services/**)",
+      "Read(//c/Users/Xarda/OneDrive/Рабочий стол/Проекты/Визиты + База/Визиты + Aberdeen/services/**)",
+      "Read(//c/Users/Xarda/OneDrive/Рабочий стол/Проекты/Визиты + База/Визиты + България/services/**)",
+      "Read(//c/Users/Xarda/OneDrive/Рабочий стол/Проекты/Визиты +baar/Визиты + База/components/**)"
+    ]
+  }
+}
