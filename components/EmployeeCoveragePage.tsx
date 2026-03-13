@@ -270,6 +270,9 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
   const [filterRegions, setFilterRegions]           = useState<string[]>([]);
   const [filterInstitutions, setFilterInstitutions] = useState<string[]>([]);
   const [filterSpecialties, setFilterSpecialties]   = useState<string[]>([]);
+  const [filterInstitutionAbbr, setFilterInstitutionAbbr] = useState<string[]>([]);
+  const [filterCategory, setFilterCategory]        = useState<string[]>([]);
+  const [filterStatus, setFilterStatus]            = useState<string[]>([]);
   const [searchDoctor, setSearchDoctor]             = useState('');
 
   // Planned connections state
@@ -388,17 +391,41 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
     return Array.from(new Set(src.map(r => r.specialty))).sort();
   }, [allRows, filterRegions, filterInstitutions]);
 
+  const institutionAbbrOptions = useMemo(() => {
+    let src = allRows;
+    if (filterRegions.length)      src = src.filter(r => filterRegions.includes(r.region));
+    if (filterInstitutions.length) src = src.filter(r => filterInstitutions.includes(r.institution));
+    if (filterSpecialties.length)  src = src.filter(r => filterSpecialties.includes(r.specialty));
+    return Array.from(new Set(src.map(r => r.institutionAbbr || '').filter(Boolean))).sort();
+  }, [allRows, filterRegions, filterInstitutions, filterSpecialties]);
+
+  const categoryOptions = useMemo(() => {
+    let src = allRows;
+    if (filterRegions.length)      src = src.filter(r => filterRegions.includes(r.region));
+    if (filterInstitutions.length) src = src.filter(r => filterInstitutions.includes(r.institution));
+    if (filterSpecialties.length)  src = src.filter(r => filterSpecialties.includes(r.specialty));
+    if (filterInstitutionAbbr.length) src = src.filter(r => filterInstitutionAbbr.includes(r.institutionAbbr || ''));
+    return Array.from(new Set(src.map(r => r.category || '').filter(Boolean))).sort();
+  }, [allRows, filterRegions, filterInstitutions, filterSpecialties, filterInstitutionAbbr]);
+
+  const statusOptions = ['Работает', 'Потенциал'];
+
   const filtered = useMemo(() => {
     let list = allRows;
     if (filterRegions.length)      list = list.filter(r => filterRegions.includes(r.region));
     if (filterInstitutions.length) list = list.filter(r => filterInstitutions.includes(r.institution));
     if (filterSpecialties.length)  list = list.filter(r => filterSpecialties.includes(r.specialty));
+    if (filterInstitutionAbbr.length) list = list.filter(r => filterInstitutionAbbr.includes(r.institutionAbbr || ''));
+    if (filterCategory.length)     list = list.filter(r => filterCategory.includes(r.category || ''));
+    if (filterStatus.length)       list = list.filter(r =>
+      filterStatus.includes(r.status === 'covered' ? 'Работает' : 'Потенциал')
+    );
     if (searchDoctor.trim()) {
       const q = searchDoctor.toLowerCase();
       list = list.filter(r => r.doctorName.toLowerCase().includes(q));
     }
     return list;
-  }, [allRows, filterRegions, filterInstitutions, filterSpecialties, searchDoctor]);
+  }, [allRows, filterRegions, filterInstitutions, filterSpecialties, filterInstitutionAbbr, filterCategory, filterStatus, searchDoctor]);
 
   const totalCovered   = allRows.filter(r => r.status === 'covered').length;
   const totalPotential = allRows.filter(r => r.status === 'potential').length;
@@ -406,12 +433,16 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
   const potentialCount = filtered.filter(r => r.status === 'potential').length;
 
   const hasFilters = filterRegions.length > 0 || filterInstitutions.length > 0 ||
-                     filterSpecialties.length > 0 || !!searchDoctor;
+                     filterSpecialties.length > 0 || filterInstitutionAbbr.length > 0 ||
+                     filterCategory.length > 0 || filterStatus.length > 0 || !!searchDoctor;
 
   const resetAll = () => {
     setFilterRegions([]);
     setFilterInstitutions([]);
     setFilterSpecialties([]);
+    setFilterInstitutionAbbr([]);
+    setFilterCategory([]);
+    setFilterStatus([]);
     setSearchDoctor('');
   };
 
@@ -546,25 +577,59 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
           {/* Filter bar */}
           <div className="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center">
             {regionOptions.length > 0 && (
-              <MultiSelect
-                label="Область"
-                options={regionOptions}
-                value={filterRegions}
-                onChange={v => { setFilterRegions(v); setFilterInstitutions([]); setFilterSpecialties([]); }}
-              />
+              <div className="w-[150px] shrink-0">
+                <MultiSelect
+                  label="Область"
+                  options={regionOptions}
+                  value={filterRegions}
+                  onChange={v => { setFilterRegions(v); setFilterInstitutions([]); setFilterSpecialties([]); setFilterInstitutionAbbr([]); setFilterCategory([]); }}
+                />
+              </div>
             )}
-            <MultiSelect
-              label="Учреждение"
-              options={institutionOptions}
-              value={filterInstitutions}
-              onChange={v => { setFilterInstitutions(v); setFilterSpecialties([]); }}
-            />
-            <MultiSelect
-              label="Специальность"
-              options={specialtyOptions}
-              value={filterSpecialties}
-              onChange={setFilterSpecialties}
-            />
+            <div className="w-[150px] shrink-0">
+              <MultiSelect
+                label="Учреждение"
+                options={institutionOptions}
+                value={filterInstitutions}
+                onChange={v => { setFilterInstitutions(v); setFilterSpecialties([]); setFilterInstitutionAbbr([]); setFilterCategory([]); }}
+              />
+            </div>
+            <div className="w-[150px] shrink-0">
+              <MultiSelect
+                label="Специальность"
+                options={specialtyOptions}
+                value={filterSpecialties}
+                onChange={v => { setFilterSpecialties(v); setFilterInstitutionAbbr([]); setFilterCategory([]); }}
+              />
+            </div>
+            {institutionAbbrOptions.length > 0 && (
+              <div className="w-[150px] shrink-0">
+                <MultiSelect
+                  label="ЛПУ Аб"
+                  options={institutionAbbrOptions}
+                  value={filterInstitutionAbbr}
+                  onChange={v => { setFilterInstitutionAbbr(v); setFilterCategory([]); }}
+                />
+              </div>
+            )}
+            {categoryOptions.length > 0 && (
+              <div className="w-[150px] shrink-0">
+                <MultiSelect
+                  label="Категория"
+                  options={categoryOptions}
+                  value={filterCategory}
+                  onChange={setFilterCategory}
+                />
+              </div>
+            )}
+            <div className="w-[150px] shrink-0">
+              <MultiSelect
+                label="Статус"
+                options={statusOptions}
+                value={filterStatus}
+                onChange={setFilterStatus}
+              />
+            </div>
 
             <div className="relative flex-1 min-w-[160px]">
               <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -593,7 +658,9 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
                     '#': i + 1,
                     'Врач': r.doctorName,
                     'Область': r.region || '',
+                    'ЛПУ Аб': r.institutionAbbr || '',
                     'Учреждение': r.institution,
+                    'Категория': r.category || '',
                     'Специальность': r.specialty,
                     'Статус': r.status === 'covered' ? 'Работает' : 'Потенциал',
                   }));
@@ -626,7 +693,9 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
                     {regionOptions.length > 0 && (
                       <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[100px]">Область</th>
                     )}
+                    <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[80px]">ЛПУ Аб</th>
                     <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[200px]">Учреждение</th>
+                    <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[80px]">Категория</th>
                     <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[120px]">Специальность</th>
                     <th className="text-left px-3 py-2.5 font-semibold text-slate-500 w-28">Статус</th>
                     {canPlan && (
@@ -661,7 +730,9 @@ export const EmployeeCoveragePage: React.FC<Props> = ({
                         {regionOptions.length > 0 && (
                           <td className="px-3 py-2 text-slate-500">{row.region || '—'}</td>
                         )}
+                        <td className="px-3 py-2 text-slate-600">{row.institutionAbbr || '—'}</td>
                         <td className="px-3 py-2 text-slate-600">{row.institution}</td>
+                        <td className="px-3 py-2 text-slate-600">{row.category || '—'}</td>
                         <td className="px-3 py-2 text-slate-600">{row.specialty}</td>
                         <td className="px-3 py-2">
                           {row.status === 'covered' ? (

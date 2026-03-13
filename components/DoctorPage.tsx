@@ -5,7 +5,7 @@ import {
   Building2, User, FileSignature, ClipboardList, CheckCircle, XCircle,
   Sparkles, RefreshCw, ChevronUp, Send,
 } from 'lucide-react';
-import { getContractVsRecipeMatchWithMonths, rowMatchesPeriod, getMonthKey, getMonthsInQuarter, buildGroupedPeriods } from '../services/dataService';
+import { getContractVsRecipeMatchWithMonths, rowMatchesPeriod, getMonthKey } from '../services/dataService';
 import { getDoctorAIAnalysis, askDoctorCustomQuestion } from '../services/aiAnalysisService';
 import { AIAnalysisOutput } from './AIAnalysisOutput';
 import { AIProviderSelector } from './AIProviderSelector';
@@ -63,24 +63,21 @@ export const DoctorPage: React.FC<Props> = ({
   const [customQuestionError, setCustomQuestionError] = useState<string | null>(null);
 
   const availableMonths = useMemo(() => {
-    if (availableMonthsProp.length > 0) return availableMonthsProp;
-    const fromHistory = Object.keys(doctor.history).sort().reverse();
+    if (availableMonthsProp.length > 0) return availableMonthsProp.filter(m => !m.includes('-Q'));
+    const fromHistory = Object.keys(doctor.history).sort();
     const fromRecipes = new Set<string>();
     recipeItems.forEach(row => {
       const m = getMonthKey(row);
       if (m) fromRecipes.add(m);
     });
-    const months = [...new Set([...fromHistory, ...fromRecipes])].sort().reverse();
-    const quarters = new Set<string>();
-    months.forEach(m => {
-      const [y, mo] = m.split('-');
-      const q = Math.ceil(parseInt(mo, 10) / 3);
-      quarters.add(`${y}-Q${q}`);
-    });
-    return [...Array.from(quarters).sort().reverse(), ...months];
+    return [...new Set([...fromHistory, ...fromRecipes])].sort((a, b) => a.localeCompare(b));
   }, [doctor.history, recipeItems, availableMonthsProp]);
 
-  const groupedPeriods = useMemo(() => buildGroupedPeriods(availableMonths), [availableMonths]);
+  const MONTH_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+  const formatMonthOption = (m: string) => {
+    const [y, mo] = m.split('-');
+    return `${MONTH_SHORT[parseInt(mo, 10) - 1] ?? mo} ${y}`;
+  };
 
   const historyData = useMemo(() =>
     Object.entries(doctor.history)
@@ -134,7 +131,9 @@ export const DoctorPage: React.FC<Props> = ({
     [contractItems, filteredRecipes, selectedPeriod]
   );
 
-  const monthsInQuarter = selectedPeriod.includes('-Q') ? getMonthsInQuarter(selectedPeriod) : null;
+  const monthsToShow = selectedPeriod && selectedPeriod !== 'All' && !selectedPeriod.includes('-Q')
+    ? [selectedPeriod]
+    : null;
   const monthLabels: Record<string, string> = {
     '01': 'Январь', '02': 'Февраль', '03': 'Март', '04': 'Апрель', '05': 'Май', '06': 'Июнь',
     '07': 'Июль', '08': 'Август', '09': 'Сентябрь', '10': 'Октябрь', '11': 'Ноябрь', '12': 'Декабрь',
@@ -240,13 +239,8 @@ export const DoctorPage: React.FC<Props> = ({
               className="pl-2 pr-8 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none font-medium text-dark-DEFAULT cursor-pointer"
             >
               <option value="All">За всё время</option>
-              {groupedPeriods.map(group => (
-                <optgroup key={group.quarterKey} label={group.quarterLabel}>
-                  <option value={group.quarterKey}>Весь {group.quarterLabel.toLowerCase()}</option>
-                  {group.months.map(m => (
-                    <option key={m.key} value={m.key}>{m.label}</option>
-                  ))}
-                </optgroup>
+              {availableMonths.map(m => (
+                <option key={m} value={m}>{formatMonthOption(m)}</option>
               ))}
             </select>
             <AIProviderSelector className="shrink-0" />
@@ -507,8 +501,8 @@ export const DoctorPage: React.FC<Props> = ({
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">Номенклатура (договор)</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">Кол-во по договору</th>
-                  {monthsInQuarter ? (
-                    monthsInQuarter.map(m => (
+                  {monthsToShow ? (
+                    monthsToShow.map(m => (
                       <th key={m} className="px-3 py-3 text-center text-xs font-semibold text-slate-500 whitespace-nowrap">
                         {monthLabels[m.split('-')[1]] ?? m}
                       </th>
@@ -519,7 +513,7 @@ export const DoctorPage: React.FC<Props> = ({
                       <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">Кол-во рецептов</th>
                     </>
                   )}
-                  {monthsInQuarter && (
+                  {monthsToShow && (
                     <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">Итого</th>
                   )}
                 </tr>
@@ -529,9 +523,9 @@ export const DoctorPage: React.FC<Props> = ({
                   <tr key={idx} className={row.hasPrescribed ? 'hover:bg-slate-50' : 'bg-red-50/50 hover:bg-red-50'}>
                     <td className="px-4 py-3 text-dark-DEFAULT">{row.contractNomenclature}</td>
                     <td className="px-4 py-3 text-right">{row.contractQty}</td>
-                    {monthsInQuarter && row.byMonth ? (
+                    {monthsToShow && row.byMonth ? (
                       <>
-                        {monthsInQuarter.map(m => {
+                        {monthsToShow.map(m => {
                           const d = row.byMonth![m];
                           return (
                             <td key={m} className="px-3 py-3 text-center">

@@ -88,16 +88,19 @@ const RowEditor: React.FC<RowEditorProps> = ({ connection, onUpdate }) => {
     }
   };
 
+  const selectedLabel = OUTCOME_OPTIONS.find(o => (o.value ?? '') === (outcome ?? ''))?.label ?? '';
+
   return (
     <>
-      <td className="px-3 py-3">
+      <td className="px-3 py-3 align-top">
         <select
           value={outcome ?? ''}
           onChange={e => {
             const v = e.target.value;
             setOutcome(v === '' ? null : v as Outcome);
           }}
-          className="w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none"
+          title={selectedLabel}
+          className="min-w-[180px] w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white focus:ring-2 focus:ring-primary-500 focus:outline-none"
         >
           {OUTCOME_OPTIONS.map(o => (
             <option key={String(o.value)} value={o.value ?? ''}>
@@ -125,7 +128,7 @@ const RowEditor: React.FC<RowEditorProps> = ({ connection, onUpdate }) => {
             >
               <MessageSquare size={11} />
               {comment ? (
-                <span className="text-slate-600 truncate max-w-[160px]">{comment}</span>
+                <span className="text-slate-600 truncate max-w-[280px]">{comment}</span>
               ) : (
                 <span>Добавить</span>
               )}
@@ -389,9 +392,9 @@ export const PlannedConnectionsPage: React.FC<Props> = ({
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-xs">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+          <div className="overflow-x-auto max-w-none">
+            <table className="w-full text-xs" style={{ minWidth: 'max-content' }}>
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="text-left px-3 py-2.5 font-semibold text-slate-500 w-8">#</th>
@@ -405,8 +408,8 @@ export const PlannedConnectionsPage: React.FC<Props> = ({
                   <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[180px]">Продукты</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-slate-500 w-24">Срок</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-slate-500 w-32">Статус</th>
-                  <th className="text-left px-3 py-2.5 font-semibold text-slate-500 w-28">Исход</th>
-                  <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[160px]">Комментарии</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[180px]">Исход</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-slate-500 min-w-[200px]">Комментарии</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>

@@ -437,16 +437,10 @@ export const getAvailableMonths = (
   contracts?: GenericRow[]
 ): string[] => {
   const months = new Set<string>();
-  const quarters = new Set<string>();
 
   const processRow = (row: GenericRow) => {
     const m = getMonthKey(row);
-    if (m) {
-      months.add(m);
-      const [year, month] = m.split('-');
-      const q = Math.ceil(parseInt(month, 10) / 3);
-      quarters.add(`${year}-Q${q}`);
-    }
+    if (m) months.add(m);
   };
 
   visits.forEach(processRow);
@@ -454,10 +448,7 @@ export const getAvailableMonths = (
   (recipes ?? []).forEach(processRow);
   (contracts ?? []).forEach(processRow);
 
-  const sortedMonths = Array.from(months).sort().reverse();
-  const sortedQuarters = Array.from(quarters).sort().reverse();
-
-  return [...sortedQuarters, ...sortedMonths];
+  return Array.from(months).sort((a, b) => a.localeCompare(b));
 };
 
 const MONTH_NAMES_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];

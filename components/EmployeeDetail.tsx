@@ -272,7 +272,7 @@ export const EmployeeDetail: React.FC<Props> = ({
 
   const availableMonths = useMemo(() => {
     const from = getAvailableMonths(employeeVisits, employeeBonuses, employeeRecipes, employeeContracts);
-    // pure months only, sorted descending (newest first)
+    // pure months only, sorted ascending (2025 first, then 2026)
     return (from.length > 0 ? from : availableMonthsProp)
       .filter(m => !m.includes('-Q'))
       .sort((a, b) => a.localeCompare(b));

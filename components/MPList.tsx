@@ -32,17 +32,15 @@ interface ModalState {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const isQuarterKey = (m: string) => /^\d{4}-Q\d$/.test(m);
-const isMonthKey   = (m: string) => /^\d{4}-\d{2}$/.test(m);
+const isMonthKey = (m: string) => /^\d{4}-\d{2}$/.test(m);
+
+const MONTH_SHORT_RU = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 
 const formatPeriod = (m: string): string => {
-  if (isQuarterKey(m)) {
-    const [year, q] = m.split('-Q');
-    return `Q${q} ${year}`;
-  }
+  if (m === 'All') return 'За всё время';
   if (isMonthKey(m)) {
     const [y, mo] = m.split('-');
-    return new Date(+y, +mo - 1, 1).toLocaleString('ru', { month: 'short', year: 'numeric' });
+    return `${MONTH_SHORT_RU[parseInt(mo, 10) - 1] ?? mo} ${y}`;
   }
   return m;
 };
@@ -57,7 +55,8 @@ const MultiSelectDropdown: React.FC<{
   icon?: React.ReactNode;
   className?: string;
   maxHeight?: string;
-}> = ({ label, options, selected, onChange, placeholder = 'Все', icon, className = '', maxHeight = 'max-h-48' }) => {
+  buttonLabel?: string;
+}> = ({ label, options, selected, onChange, placeholder = 'Все', icon, className = '', maxHeight = 'max-h-48', buttonLabel }) => {
   const [open, setOpen] = useState(false);
   const [dropPos, setDropPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -80,7 +79,7 @@ const MultiSelectDropdown: React.FC<{
   const toggle = (v: string) => {
     onChange(selected.includes(v) ? selected.filter(x => x !== v) : [...selected, v]);
   };
-  const btnLabel = selected.length === 0 ? placeholder : `${selected.length} выбрано`;
+  const btnLabel = buttonLabel ?? (selected.length === 0 ? placeholder : `${selected.length} выбрано`);
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
@@ -1681,11 +1680,31 @@ export const MPList: React.FC<Props> = ({
 
   const hasFilters = !!(filterRegions.length || filterGroups.length || search);
 
-  // Only show valid period keys (filter out garbage)
+  // Only months (no quarters), sorted descending
   const validPeriods = useMemo(
-    () => availableMonths.filter(m => isMonthKey(m) || isQuarterKey(m)),
+    () => availableMonths.filter(m => isMonthKey(m)).sort((a, b) => a.localeCompare(b)),
     [availableMonths]
   );
+
+  const periodOptions = useMemo(
+    () => [
+      { value: 'All', label: 'За всё время' },
+      ...validPeriods.map(m => ({ value: m, label: formatPeriod(m) })),
+    ],
+    [validPeriods]
+  );
+
+  const handlePeriodChange = (next: string[]) => {
+    const hasAll = next.includes('All');
+    const months = next.filter(x => x !== 'All');
+    if (hasAll && months.length > 0) {
+      onPeriodChange?.(['All']);
+    } else if (hasAll) {
+      onPeriodChange?.(next);
+    } else {
+      onPeriodChange?.(months);
+    }
+  };
 
   return (
     <>
@@ -1745,13 +1764,14 @@ export const MPList: React.FC<Props> = ({
         {/* Filters */}
         <div className="relative z-10 bg-white rounded-xl border border-slate-200 overflow-visible">
           <div className="px-4 py-2 flex flex-wrap gap-2 border-b border-slate-100">
-            {validPeriods.length > 0 && onPeriodChange && (
+            {(validPeriods.length > 0 || periodOptions.length > 1) && onPeriodChange && (
               <MultiSelectDropdown
                 label="Период"
-                options={validPeriods.map(m => ({ value: m, label: formatPeriod(m) }))}
-                selected={selectedPeriods}
-                onChange={onPeriodChange}
-                placeholder="Все периоды"
+                options={periodOptions}
+                selected={selectedPeriods.length === 0 ? ['All'] : selectedPeriods}
+                onChange={handlePeriodChange}
+                placeholder="За всё время"
+                buttonLabel={selectedPeriods.length === 0 || (selectedPeriods.length === 1 && selectedPeriods[0] === 'All') ? 'За всё время' : `${selectedPeriods.length} выбрано`}
                 icon={<Calendar size={12} className="text-slate-400" />}
                 maxHeight="max-h-64"
               />
